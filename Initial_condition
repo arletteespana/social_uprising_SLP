@@ -1,0 +1,27 @@
+ListaMiedo[numciudadanos_, p_] := Module[{\[Beta], probabilidades},
+   probabilidades = 
+    Table[Binomial[numciudadanos, k]*p^k*(1 - p)^(
+      numciudadanos - k), {k, 0, numciudadanos}];
+   \[Beta] = Table[i/numciudadanos, {i, 0, numciudadanos}];
+   RandomChoice[probabilidades -> \[Beta], numciudadanos]
+   ];
+
+CondicionInicial[n1_, numciudadanos_, fuente_, numpolicias_, cuartel_,
+    Tvlista_, \[Tau]1_, \[Tau]2_, p_, nummax_] := 
+  Module[{matriz, ciudadanos, ciudaux, numvertices, policias, 
+    Tvlistaaux},
+   matriz = Normal[AdjacencyMatrix[GridGraph[{n1, n1}]]];
+   numvertices = n1*n1;
+   ciudaux = 
+    Transpose[{Table[Mod[i, n1*n1] + 1, {i, numciudadanos}], 
+      Table[0, {i, numciudadanos}], ListaMiedo[numciudadanos, p]}];
+   ciudadanos = 
+    ReplacePart[
+     ciudaux, {#[[1]], 2} & /@ Position[ciudaux, fuente] -> 1];
+   policias = Table[cuartel, {i, numpolicias}];
+   Tvlistaaux = 
+    Table[Table[1/(numciudadanos + numpolicias), {j, n1^2}], {i, 4}];
+
+  {matriz, {{ciudadanos, policias}, 1}, 
+     Tvlistaaux[[Tvlista]], \[Tau]1, \[Tau]2, cuartel}
+   ];
