@@ -54,22 +54,38 @@ VarianzaBeta[list_] :=
    Partition[#[[3]] & /@ varianzas, Sqrt[Length[list[[1]][[1]]]] ]
    ];
 
-Manipulate[Module[{dinam},
-   dinam = 
-    CondicionInicial[n1, numciudadanos, fuente, numpolicias, cuartel, 
-     Tvlista, \[Tau]1, \[Tau]2, p, nummax];
-   {MatrixPlot[CuantosCiudadanos[dinam[[i]]], 
+Manipulate[Module[{dinam, arreglo},
+  dinam = 
+   CondicionInicial[Cuadrícula, NumCiudadanos, Fuente, NumPolicías, 
+    Cuartel, Tipo, \[Tau]1, \[Tau]2, P, NumMáx];
+  arreglo = {MatrixPlot[CuantosCiudadanos[dinam[[Iteración]]], 
      PlotLegends -> Automatic, ColorFunction -> "ThermometerColors"] ,
-     MatrixPlot[CuantosPolicias[dinam[[i]]], PlotLegends -> Automatic,
-      ColorFunction -> "RedBlueTones"],
-    Total[Total[CuantosCiudadanos[dinam[[i]]]]],
-    MatrixPlot[PromedioBeta[dinam[[i]]], PlotLegends -> Automatic, 
-     ColorFunction -> "GrayYellowTones"], 
-    MatrixPlot[VarianzaBeta[dinam[[i]]], PlotLegends -> Automatic, 
-     ColorFunction -> "GreenPinkTones"]}
-   ],
-  {n1, 3, InputField}, {numciudadanos, 100, InputField}, {fuente, 7, 
-   InputField}, {numpolicias, 5, InputField}, {cuartel, 5, 
-   InputField}, {Tvlista, 1, InputField}, {\[Tau]1, 0.1, 
-   InputField}, {\[Tau]2, 0.5, InputField}, {nummax, 10000, 
-   InputField}, {p, 0.3, InputField}, {i, 1, 10000, 1}];
+     MatrixPlot[CuantosPolicias[dinam[[Iteración]]], 
+     PlotLegends -> Automatic, ColorFunction -> "RedBlueTones"], 
+    DiscretePlot[
+     Total[Total[CuantosCiudadanos[dinam[[i]]]]]/NumCiudadanos, {i, 1,
+       Iteración}, PlotRange -> {0, 1}],
+    Total[Total[CuantosCiudadanos[dinam[[Iteración]]]]],
+    MatrixPlot[PromedioBeta[dinam[[Iteración]]], 
+     PlotLegends -> Automatic, ColorFunction -> "GrayYellowTones"], 
+    MatrixPlot[VarianzaBeta[dinam[[Iteración]]], 
+     PlotLegends -> Automatic, ColorFunction -> "GreenPinkTones"]};
+  Flatten[
+   Join[{If[Ciudadanos == 1, arreglo[[1]], {}], 
+     If[Policias == 1, arreglo[[2]], {}], 
+     If[TotalCiudadanos == 1, arreglo[[4]], {}], 
+     If[AcumulaciónCiudadanos == 1, arreglo[[3]], {}], 
+     If[Media == 1, arreglo[[5]], {}], 
+     If[Varianza == 1, arreglo[[6]], {}]}]
+   ]],
+ {Ciudadanos, {0, 1}, Checkbox}, {Policias, {0, 1}, 
+  Checkbox}, {TotalCiudadanos, {0, 1}, 
+  Checkbox}, {AcumulaciónCiudadanos, {0, 1}, 
+  Checkbox}, {Media, {0, 1}, Checkbox}, {Varianza, {0, 1}, 
+  Checkbox}, {Cuadrícula, 3, InputField}, {NumCiudadanos, 100, 
+  InputField}, {Target, 13, InputField}, {Fuente, 7, 
+  InputField}, {NumPolicías, 5, InputField}, {Cuartel, 5, 
+  InputField}, {Tipo, {1, 2, 3, 4}, RadioButton}, {\[Tau]1, 0.1, 
+  InputField}, {\[Tau]2, 0.5, InputField}, {NumMáx, 1, 
+  InputField}, {P, 0.3, InputField}, {Iteración, 1, 20000, 
+  NumCiudadanos + NumPolicías}]
