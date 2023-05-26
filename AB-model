@@ -1,0 +1,132 @@
+FuncionAlpha[verticefijo_, condicioninicial_, Tv_, \[Tau]1_] := 
+  Module[{\[Alpha], ciudadanos, ciudadanosactivos, policias, 
+    numactivos, numtotal},
+   ciudadanos = Select[condicioninicial[[1]], #[[1]] == verticefijo &];
+   policias = Select[condicioninicial[[2]], # == verticefijo &];
+   If[ciudadanos == {}, numactivos = 0, 
+    numactivos = Total[Transpose[ciudadanos][[2]]]];
+   numtotal = Length[ciudadanos] + Length[policias]/\[Tau]1;
+   If[numactivos/numtotal >= Tv, \[Alpha] = 1, \[Alpha] = 0];
+   \[Alpha]];
+   
+FuncionAlphaBarra1[verticefijo_, condicioninicial_, \[Tau]_, 
+   cuartel_] := 
+  Module[{\[Alpha], ciudadanos, policias, numpolicias, 
+    numactivos, \[Tau]aux},
+   If[verticefijo == cuartel, \[Tau]aux = \[Tau], \[Tau]aux = 
+     Length[condicioninicial[[2]]]];
+   ciudadanos = Select[condicioninicial[[1]], #[[1]] == verticefijo &];
+   policias = Select[condicioninicial[[2]], # == verticefijo &];
+   If[ciudadanos == {}, numactivos = 0, 
+    numactivos = Total[Transpose[ciudadanos][[2]]]];
+   numpolicias = Length[policias];
+   If[numactivos != 0 && 
+     numpolicias >= \[Tau]aux*numactivos, \[Alpha] = 0, \[Alpha] = 
+     1];
+   \[Alpha]];
+   
+FuncionAlphaBarra2[verticefijo_, condicioninicial_, \[Tau]_, 
+   cuartel_] := 
+  Module[{\[Alpha], ciudadanos, policias, numpolicias, 
+    numactivos, \[Tau]2aux},
+   ciudadanos = Select[condicioninicial[[1]], #[[1]] == verticefijo &];
+   policias = Select[condicioninicial[[2]], # == verticefijo &];
+   If[ciudadanos == {}, numactivos = 0, 
+    numactivos = Total[Transpose[ciudadanos][[2]]]];
+   numpolicias = Length[policias];
+   If[verticefijo == cuartel, \[Tau]2aux = 0, \[Tau]2aux = \[Tau]];
+   If[numpolicias <= \[Tau]2aux*numactivos, \[Alpha] = 0, \[Alpha] = 
+     1];
+   \[Alpha]];
+
+ActivacionIndividual[v0_, condicioninicial_, Tvlista_, \[Tau]1_] := 
+  Module[{verticefijo, ciudadanos, \[Alpha], tverticefijo, numactivos},
+   verticefijo = v0[[1]];
+   tverticefijo = Tvlista[[verticefijo]];
+   ciudadanos = Select[condicioninicial[[1]], #[[1]] == verticefijo &];
+   If[ciudadanos == {}, numactivos = 0, 
+    numactivos = Total[Transpose[ciudadanos][[2]]]];
+   \[Alpha] = 
+    FuncionAlpha[verticefijo, condicioninicial, tverticefijo, \[Tau]1];
+   If[\[Alpha] != 0 && numactivos != 0 && 
+     RandomReal[] > v0[[3]], {verticefijo, 1, v0[[3]]}, v0]
+   ];
+   
+MovimientoPoliciasIndividual[u0_, numver_, verticerandom_, 
+   condicioninicial_, Tvlista_, \[Tau]1_, cuartel_] :=
+  Module[{verticefijo, \[Alpha]fijo, \[Alpha]1fijo, nuevasposiciones, 
+    policiasnuevos, tverticefijo, ciudadanos, numactivos},
+   verticefijo = u0;
+   tverticefijo = Tvlista[[u0]];
+   ciudadanos = Select[condicioninicial[[1]], #[[1]] == verticefijo &];
+   If[ciudadanos == {}, numactivos = 0, 
+    numactivos = Total[Transpose[ciudadanos][[2]]]];
+   \[Alpha]fijo = 
+    FuncionAlpha[verticefijo, condicioninicial, tverticefijo, \[Tau]1];
+   \[Alpha]1fijo = 
+    FuncionAlphaBarra1[verticefijo, condicioninicial, \[Tau]1, 
+     cuartel];
+  If[verticefijo == cuartel, verticerandom,
+    If[numactivos != 0 && \[Alpha]fijo ==  \[Alpha]1fijo, 
+     If[\[Alpha]fijo == 1, cuartel, verticerandom] , verticefijo]]
+   ];
+   
+MovimientoRevoltososIndividual[adjmatrix_, v0_, 
+   condicioninicial_, \[Tau]1_, \[Tau]2_, cuartel_] := 
+  Module[{\[Alpha]1fijo, \[Alpha]2fijo, adonde, matrix, verticefijo},
+   verticefijo = v0[[1]];
+   matrix = Normal[adjmatrix];
+   \[Alpha]1fijo = 
+    FuncionAlphaBarra1[verticefijo, condicioninicial, \[Tau]1, 
+     cuartel];
+   \[Alpha]2fijo = 
+    FuncionAlphaBarra2[verticefijo, condicioninicial, \[Tau]2, 
+     cuartel];
+   adonde = 
+    RandomChoice[Flatten[Position[matrix[[verticefijo]], 1]]];
+   If[(\[Alpha]1fijo + \[Alpha]2fijo) != 0 && 
+     RandomReal[] > 
+      Max[\[Alpha]1fijo*
+        v0[[3]], \[Alpha]2fijo*(1 - v0[[3]])], {adonde, 1, v0[[3]]}, 
+    v0]
+   ];
+   
+UnaCorrida[{adjmatrix_, condicioninicial1_, 
+    Tvlista_, \[Tau]1_, \[Tau]2_, cuartel_}] := 
+  Module[{movciudadanos, movpolicias, condicioninicial, j, 
+    verticesconactivos},
+   j = condicioninicial1[[2]];
+   verticesconactivos = 
+    Union[#[[1]] & /@ 
+      Select[condicioninicial1[[1]][[1]], #[[2]] == 1 &]];
+   If[Mod[j, Length[Flatten[condicioninicial1[[1]], 1]]] == 0,
+    condicioninicial =
+     Join[{Permute[condicioninicial1[[1]][[1]], 
+        RandomPermutation[
+         Length[condicioninicial1[[1]][[1]]]]]}, {Permute[
+        condicioninicial1[[1]][[2]], 
+        RandomPermutation[Length[condicioninicial1[[1]][[2]]]]]}], 
+    condicioninicial = condicioninicial1[[1]]];
+   {adjmatrix, {If[j <= Length[condicioninicial[[1]]],
+      If[condicioninicial[[1]][[j]][[2]] == 1, 
+       ReplacePart[
+        condicioninicial, {1, j} -> 
+         MovimientoRevoltososIndividual[adjmatrix, 
+          condicioninicial[[1]][[j]], 
+          condicioninicial, \[Tau]1, \[Tau]2, cuartel]],
+       ReplacePart[
+        condicioninicial, {1, j} -> 
+         ActivacionIndividual[condicioninicial[[1]][[j]], 
+          condicioninicial, Tvlista, \[Tau]1]]],
+      ReplacePart[
+       condicioninicial, {2, j - Length[condicioninicial[[1]]]} -> 
+        MovimientoPoliciasIndividual[
+         Flatten[condicioninicial, 1][[j]], Length[Normal[adjmatrix]],
+          RandomChoice[
+          Union[{Ceiling[Length[adjmatrix]/2]}, 
+           Complement[
+            verticesconactivos, {Flatten[condicioninicial, 1][[
+              j]]}]]], condicioninicial, Tvlista, \[Tau]1, cuartel]]
+      ], Mod[j, Length[Flatten[condicioninicial, 1]]] + 1}, 
+    Tvlista, \[Tau]1, \[Tau]2, cuartel}
+   ];
