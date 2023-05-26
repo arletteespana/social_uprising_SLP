@@ -1,0 +1,75 @@
+$RecursionLimit = Infinity
+
+Orbita[f_, x0_, n_] := 
+  If[n == 0, {}, Join[{x0}, Orbita[f, f[x0], n - 1]]];
+
+TodosCambiados[condicioninicial_, n_] := 
+  Orbita[UnaCorrida[#] &, condicioninicial, n];
+
+CuantosCiudadanos[list_] := Module[{ciudadanos},
+   ciudadanos = list[[2]][[1]][[1]];
+   Partition[
+    Table[Length[
+      Select[ciudadanos, #[[1]] == i && #[[2]] == 1 &]], {i, 1, 
+      Length[list[[1]]]}], Sqrt[Length[list[[1]]]]]
+   ];
+   
+CuantosPolicias[list_] := Module[{policias},
+   policias = list[[2]][[1]][[2]];
+   Partition[
+    Table[Length[Select[policias, # == i &]], {i, 1, 
+      Length[list[[1]]]}], Sqrt[Length[list[[1]]]]]
+   ];
+   
+PromedioBeta[list_] := 
+  Module[{ciudadanos, activos, promedios, activosformato},
+   ciudadanos = list[[2]][[1]][[1]];
+   activos = 
+    Table[Select[ciudadanos, #[[1]] == i && #[[2]] == 1 &], {i, 
+      Length[list[[1]]]}];
+   If[Position[activos, {}] == {}, activosformato = activos, 
+    activosformato = 
+     ReplacePart[activos, Position[activos, {}] -> {{ 0, 0, 0}}]];
+   promedios = Mean[#] & /@ activosformato;
+   Partition[#[[3]] & /@ promedios, Sqrt[Length[list[[1]][[1]]]]]
+   ];
+   
+VarianzaBeta[list_] := 
+  Module[{ciudadanos, activos, varianzas, activosformato, formato},
+   ciudadanos = list[[2]][[1]][[1]];
+   activos = 
+    Table[Select[ciudadanos, #[[1]] == i && #[[2]] == 1 &], {i, 
+      Length[list[[1]]]}];
+   If[Position[activos, {}] == {}, activosformato = activos, 
+    activosformato = 
+     ReplacePart[activos, 
+      Position[activos, {}] -> {{ 0, 0, 0}, {0, 0, 0}}]];
+   If[Position[Length[#] & /@ activosformato, 1] == {}, 
+    formato = activosformato, 
+    formato = 
+     ReplacePart[activosformato, 
+      Position[Length[#] & /@ activosformato, 
+        1] -> {{ 0, 0, 0}, {0, 0, 0}}]];
+   varianzas = Variance[#] & /@ formato;
+   Partition[#[[3]] & /@ varianzas, Sqrt[Length[list[[1]][[1]]]] ]
+   ];
+
+Manipulate[Module[{dinam},
+   dinam = 
+    CondicionInicial[n1, numciudadanos, fuente, numpolicias, cuartel, 
+     Tvlista, \[Tau]1, \[Tau]2, p, nummax];
+   {MatrixPlot[CuantosCiudadanos[dinam[[i]]], 
+     PlotLegends -> Automatic, ColorFunction -> "ThermometerColors"] ,
+     MatrixPlot[CuantosPolicias[dinam[[i]]], PlotLegends -> Automatic,
+      ColorFunction -> "RedBlueTones"],
+    Total[Total[CuantosCiudadanos[dinam[[i]]]]],
+    MatrixPlot[PromedioBeta[dinam[[i]]], PlotLegends -> Automatic, 
+     ColorFunction -> "GrayYellowTones"], 
+    MatrixPlot[VarianzaBeta[dinam[[i]]], PlotLegends -> Automatic, 
+     ColorFunction -> "GreenPinkTones"]}
+   ],
+  {n1, 3, InputField}, {numciudadanos, 100, InputField}, {fuente, 7, 
+   InputField}, {numpolicias, 5, InputField}, {cuartel, 5, 
+   InputField}, {Tvlista, 1, InputField}, {\[Tau]1, 0.1, 
+   InputField}, {\[Tau]2, 0.5, InputField}, {nummax, 10000, 
+   InputField}, {p, 0.3, InputField}, {i, 1, 10000, 1}];
