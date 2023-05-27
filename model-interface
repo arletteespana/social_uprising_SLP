@@ -56,8 +56,8 @@ VarianzaBeta[list_] :=
 
 Manipulate[Module[{dinam, arreglo},
   dinam = 
-   CondicionInicial[Cuadrícula, NumCiudadanos, Fuente, NumPolicías, 
-    Cuartel, Tipo, \[Tau]1, \[Tau]2, P, NumMáx];
+   Rest[CondicionInicial[Cuadrícula, NumCiudadanos, Fuente, 
+     NumPolicías, Cuartel, Tipo, \[Tau]1, \[Tau]2, P, NumMáx]];
   arreglo = {MatrixPlot[CuantosCiudadanos[dinam[[Iteración]]], 
      PlotLegends -> Automatic, ColorFunction -> "ThermometerColors"] ,
      MatrixPlot[CuantosPolicias[dinam[[Iteración]]], 
@@ -70,6 +70,7 @@ Manipulate[Module[{dinam, arreglo},
      PlotLegends -> Automatic, ColorFunction -> "GrayYellowTones"], 
     MatrixPlot[VarianzaBeta[dinam[[Iteración]]], 
      PlotLegends -> Automatic, ColorFunction -> "GreenPinkTones"]};
+  
   Flatten[
    Join[{If[Ciudadanos == 1, arreglo[[1]], {}], 
      If[Policias == 1, arreglo[[2]], {}], 
@@ -86,6 +87,5 @@ Manipulate[Module[{dinam, arreglo},
   InputField}, {Target, 13, InputField}, {Fuente, 7, 
   InputField}, {NumPolicías, 5, InputField}, {Cuartel, 5, 
   InputField}, {Tipo, {1, 2, 3, 4}, RadioButton}, {\[Tau]1, 0.1, 
-  InputField}, {\[Tau]2, 0.5, InputField}, {NumMáx, 1, 
-  InputField}, {P, 0.3, InputField}, {Iteración, 1, 20000, 
-  NumCiudadanos + NumPolicías}]
+  InputField}, {\[Tau]2, 0.5, InputField}, {NumMáx, 3, 
+  InputField}, {P, 0.3, InputField}, {Iteración, 2, 1000}]
